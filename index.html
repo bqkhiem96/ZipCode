@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.6.0/css/bulma.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css">
+  <title>Document</title>
+  <style>
+    .icon-check,.icon-remove{
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <section class="hero hero-body is-dark container">
+    <h1 class="title">Location Checker:</h1>
+    <h2 class="subtitle">ZipCode</h2>
+    <form action="" id="zipform">
+      <div class="field">
+        <label class="label">ZipCode</label>
+        <div class="control has-icons-left has-icons-right">
+          <input class="input zip is-success" type="text" placeholder="Text input" value="">
+          <span class="icon is-small is-left">
+            <i class="fa fa-map-pin"></i>
+          </span>
+          <span class="icon  is-small is-right icon-check">
+            <i class="fa fa-check"></i>
+          </span>
+          <span class="icon  is-small is-right icon-remove">
+            <i class="fa fa-remove"></i>
+          </span>
+        </div>
+      </div>
+    </form>
+  </section>
+  <div class="container">
+    <div id="output">
+       
+    </div>
+  </div>
+  <script>
+    document.querySelector('#zipform').addEventListener('submit',getLocationInfo);
+    document.querySelector('body').addEventListener('click',deleteLocation);
+    function getLocationInfo(e){
+      const zipCode = document.querySelector('.zip').value;
+      fetch(`http://api.zippopotam.us/us/${zipCode}`)
+        .then(response => {
+          if(response.status !== 200){
+            showIcon('remove');
+            document.querySelector('#output').innerHTML = 
+            `
+            <article class="message is-danger">
+                <div class="message-body">
+                  <p>Invalid Zip Code, please try again</p>
+                </div>
+            </article>
+            `;
+            throw Error(response.statusText)
+          }else{
+            showIcon('check');
+            return response.json();
+          }
+        }
+        
+        )
+        .then(data => {
+          let output = "";
+          data.places.forEach(place =>{
+            output+= `
+            <article class="message is-primary">
+              <div class="message-header">
+                <p>Primary</p>
+                <button class="delete" aria-label="delete"></button>
+              </div>
+              <div class="message-body">
+                <ul>
+                  <li><strong>City: </strong>${place['place name']}</li>
+                  <li><strong>State: </strong>${place['state']}</li>
+                  <li><strong>State Abv: </strong>${place['state abbreviation']}</li>
+                  <li><strong>Longtitude: </strong>${place['longitude']}</li>
+                  <li><strong>Latitude: </strong>${place['latitude']}</li>
+                  
+                </ul>
+              </div>
+            </article>
+            `
+          })
+          document.querySelector('#output').innerHTML = output;
+        })
+        .catch(err => console.log(err));
+      e.preventDefault();
+    }
+    function showIcon(icon){
+      document.querySelector('.icon-remove').style.display =  'none';
+      document.querySelector('.icon-check').style.display = 'none';
+      document.querySelector(`.icon-${icon}`).style.display =  'inline-flex';
+      
+    }
+    function deleteLocation(e){
+      if(e.target.className  == 'delete'){
+        document.querySelector('.message').remove();
+        document.querySelector('.icon-check').remove();
+        document.querySelector('.zip').value = '';
+      }
+     
+    }
+  </script>
+</body>
+
+</html>
